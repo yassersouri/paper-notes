@@ -1,0 +1,76 @@
+# Dense Optical Flow Prediction from a Static Image
+
+ICCV 2015 | [1505.00295](http://arxiv.org/abs/1505.00295)
+
+Walker J, Gupta A, Hebert M (CMU)
+
+## High-level notes (CFTP: claims from the paper)
+
+* Given a scene what is going to move and in what direction?
+* CNN predicts the motion of each and every pixel in the image. (Actually the method predicts a 20x20 output for a 200x200 image)
+* Uses 10ks of videos to train the model.
+* No assumption about the scene.
+* Video datasets used: UCF-101 and HMDB-51.
+* They also present a "proof of concept" extension of their model which makes long-range prediciton about future motion.
+* **Advances by this paper**:
+	- Generalization: The method can generalize across a large number of diverse domains.
+
+## Method
+
+**Regression or Classification?**
+
+Since we want to predict real values (2 real values actually, direction and magnitude) for each pixel, it is natural to think of regression. The paper claims that the problem with regression is "and output space which is smoothens results to the mean". (I think; isn't that where GANs shine?) The paper notes the other regression problem of "surface normal estimation" where researches have proposed reformulating structured regression as a classification problem.
+In "surface normal estimation" they quantize the surface normal vectors into a codebook.
+
+In "optical flow estimation" this paper quantizes the optical flow vectors into **40 clusters** by k-means. Then the problem is treated as semantic segmentation.
+For the classification problem a soft-max loss is used.
+
+At test time, they produce a soft output by weighted combination of codes of the codebook.
+
+**Network Design**
+
+Similar to AlexNet:
+
+- All conv strides are 1, except for the first layer which is 4.
+- Maxpooling stride is 2, the maxpooling size is 3x3.
+
+Here is the network:
+
+conv(96, 11x11) -> LRN -> MaxPool -> conv(256, 5x5) -> LRN -> MaxPool -> conv(384, 3x3) -> conv(384, 3x3) -> conv(256, 3x3) -> MaxPool -> Fully(4096) -> Fully (4096) -> SpatialSoftMax.
+
+Input image size: 200x200.
+
+Instead of the regular softmax they use "spatial softmax" of [1] (surface normal estimation). The softmax output is 20x20x40. 20 rows, 20 columns and 40 this is number of codes in the codebook. In total 16k outputs.
+
+Some data augmentation is also used: Random cropping of the window + random right-left flipping.
+
+### Generating ground truth labels
+
+This paper uses DeepFlow to compute optical flow. To reduce noise, the average optical flow of five future frames for each image is used. Since the main goal is to focus on the motion of objects inside the image not the camera motion, this paper has used the stabilization portion of the implementation of [2] to automatically stabilize videos using and estimated homography. 
+
+350k frames from UCF-101 and 150k frames from HMDB-51 are used as training data.
+
+### Questions about the method:
+
+**How to generate the codebook?**
+
+...
+
+**How to combine the softmax outputs for each pixel?**
+
+...
+
+**How does the "spatial softmax work"?**
+
+The spatial softmax layer is just a fully connected layer which produces MxNxC outputs (_F(I)_). We also have MxN true labels (_Y_). We apply the softmax activation on the third dimention on _F(I)_. Then we have MxN categorical cross entropy losses which we some to come up with the final loss.
+
+
+## Experiments
+
+For training they sub-sample frames by a factor of 5.
+
+## References
+
+[1] Xiaolong Wang, David F. Fouhey, and Abhinav Gupta. Designing Deep Networks for Surface Normal Estimation. In CVPR, 2015.
+
+[2] H. Wang and C. Schmid. Action recognition with improved trajectories. In ICCV, 2013.
