@@ -31,13 +31,15 @@ Xue T, Wu J, Bouman K, Freeman W (MIT)
 
 
 ## Cons
-z_ dimension is very large i.e 3200! They show as part of their results that
+
 * I don't understand why is it useful to generate future frames. Whatever we want to recognize from those future frames we can recognize directly. But it seems to be a cool thing to do and NIPS reviewers seems to have liked it.
-* The _z_ dimension is very large i.e 3200! They show as part of their results that 
+* The _z_ dimension is very large i.e 3200! They show as part of their results that most of the z values are always zero.
 * Motion encoder gets as input (during training) both the ground truth, *difference image* and also the *current frame*. It is not discussed in the paper what is the gain added by giving the *current frame* to the motion encoder. What happens if it is not included.
 * This method only predicts the next frame, so long term motion is not predicted. To me long term motion is much more useful.
 * They have only experimented with synthetic datasets or very simple objects moving in complete white background.
 * The method is *designed* to be limited to very simple motion.
+* Performance of the network is not discussed.
+
 
 ## Ideas
 
